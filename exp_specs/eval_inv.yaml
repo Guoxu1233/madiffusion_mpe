@@ -1,0 +1,19 @@
+meta_data:
+  exp_name: "eval_inv"
+  script_path: "run_scripts/evaluate.py"
+  num_workers: 1
+
+variables:
+  log_dir: [
+    "/home/user/thu_ee/madiff-main/logs/mad_mpe/simple_tag-expert/h_24-models.SharedConvAttentionDeconv-r_700-guidew_1.2-ctde_False-time_20240803_180635/100",
+
+  ]
+
+constants:
+  load_steps: [0]
+  num_eval: 3
+  num_envs: 3
+  evaluator: "utils.MADEvaluator"
+  overwrite: True
+  use_ddim_sample: True
+  n_ddim_steps: 15

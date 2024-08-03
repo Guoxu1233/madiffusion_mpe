@@ -3,7 +3,7 @@
 
 ### Setup MPE
 
-We use the MPE dataset from [OMAR](https://github.com/ling-pan/OMAR). The dataset download link and instructions can be found in OMAR's [repo](https://github.com/ling-pan/OMAR). Since their BaiduPan download links might be inconvenient for non-Chinese users, we maintain a anonymous mirror [repo](https://osf.io/jxawh/?view_only=dd3264a695af4c03bffde0350b8e8c4a) in OSF for acquiring the dataset.
+We collect the MPE dataset from my MADDPG code
 
 The downloaded dataset should be placed under `diffuser/datasets/data/mpe`.
 
