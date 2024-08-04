@@ -3,9 +3,9 @@
 
 ### Setup MPE
 
-We collect the MPE dataset from my MADDPG code
+We collect the MPE dataset from my MADDPG codebase
 
-The downloaded dataset should be placed under `diffuser/datasets/data/mpe`.
+The collected dataset should be placed under `diffuser/datasets/data/mpe`.
 
 Install MPE environment:
 
