@@ -1,12 +1,14 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from ml_logger import logger
-
+import os
+import imageio
 from diffuser.datasets.mpe import load_environment
 
 from .arrays import to_np
 from .video import save_video, save_videos
 
+from datetime import datetime
 # -----------------------------------------------------------------------------#
 # ------------------------------ helper functions -----------------------------#
 # -----------------------------------------------------------------------------#
@@ -82,20 +84,40 @@ class MPERenderer:
         if savepath is not None:
             fig = plt.figure()
             plt.imshow(composite_images)
-            logger.savefig(savepath, fig)
-            plt.close()
-            print(f"Saved {len(paths)} samples to: {savepath}")
-            logger.save_video(
-                sample_images,
-                savepath.replace(".png", ".mp4"),
-                macro_block_size=4,
-                fps=2,
-            )
-            print(
-                f"Saved {len(paths)} samples video to: {savepath.replace('.png', '.mp4')}"
-            )
+            # 使用savepath解析出目录和文件名
+            image_dir = os.path.dirname(savepath)
+            basename = os.path.basename(savepath)
+            image_savepath = os.path.join(image_dir, basename)
+            current_time = datetime.now().strftime("%m%d_%H%M")
+            video_dir = os.path.join("videos", current_time)
+            if not os.path.exists(video_dir):
+                os.makedirs(video_dir)
 
-        return composite_images
+            video_savepath = os.path.join(video_dir, basename.replace(".png", ".mp4"))
+            if not os.path.exists(image_dir):
+                os.makedirs(image_dir)
+
+            try:
+                logger.savefig(image_savepath, fig)
+                plt.close()
+                print(f"Saved {len(paths)} samples to: {image_savepath}")
+            except Exception as e:
+                print(f"Error saving image: {e}")
+
+            # 保存视频文件
+            try:
+                if os.path.exists(video_savepath):
+                    os.remove(video_savepath)  # 确保旧文件被删除
+
+                with imageio.get_writer(video_savepath, fps=2,macro_block_size=None) as writer:
+                    for frame in sample_images:
+                        writer.append_data(frame)
+
+                print(f"Saved {len(paths)} samples video to: {video_savepath}")
+            except Exception as e:
+                print(f"Error saving video: {e}")
+
+            return composite_images
 
     def render_rollout(self, savepath, states, **video_kwargs):
         if type(states) is list:

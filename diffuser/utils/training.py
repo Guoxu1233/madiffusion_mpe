@@ -54,9 +54,9 @@ class Trainer(object):
         log_freq=100,
         sample_freq=1000,
         save_freq=1000,
-        label_freq=100000,
+        #label_freq=100000,
         eval_freq=100000,
-        save_parallel=False,
+        #save_parallel=False,
         n_reference=8,
         bucket=None,
         train_device="cuda",
@@ -77,9 +77,9 @@ class Trainer(object):
         self.log_freq = log_freq
         self.sample_freq = sample_freq
         self.save_freq = save_freq
-        self.label_freq = label_freq
+        #self.label_freq = label_freq
         self.eval_freq = eval_freq
-        self.save_parallel = save_parallel
+        #self.save_parallel = save_parallel
 
         self.batch_size = train_batch_size
         self.gradient_accumulate_every = gradient_accumulate_every
@@ -144,9 +144,11 @@ class Trainer(object):
     def train(self, n_train_steps):
         timer = Timer()
         for _ in range(n_train_steps):
-            for i in range(self.gradient_accumulate_every):
+            #TODO debug的时候把gradient_accumulate_every调为1，真训练的时候还是得还原为2
+            #在显存有限的情况下，可以使用较小的 batch size 进行梯度累积，以模拟更大的 batch size，从而提高模型的泛化能力。
+            for i in range(self.gradient_accumulate_every):#这个gradient_accumulate_every就决定了每几次计算loss后更新一次step，默认是2
                 batch = next(self.dataloader)
-                batch = batch_to_device(batch, device=self.device)
+                batch = batch_to_device(batch, device=self.device)#dict_keys(['x', 'cond', 'loss_masks', 'attention_masks', 'returns'])
                 loss, infos = self.model.loss(**batch)
                 loss = loss / self.gradient_accumulate_every
                 loss.backward()

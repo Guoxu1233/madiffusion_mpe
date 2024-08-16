@@ -258,8 +258,6 @@ class SharedConvAttentionDeconv(nn.Module):
 
         dims = [transition_dim, *map(lambda m: dim * m, dim_mults)]
         in_out = list(zip(dims[:-1], dims[1:]))
-        print(f"[ models/temporal ] Channel dimensions: {in_out}")
-
         self.net = TemporalUnet(
             horizon=horizon,
             history_horizon=history_horizon,
@@ -413,8 +411,7 @@ class SharedConvAttentionDeconv(nn.Module):
         x = self.net.final_conv(x)
         x = x.reshape(bs, x.shape[0] // bs, x.shape[1], x.shape[2])
 
-        x = einops.rearrange(x, "b a f t -> b t a f")
-
+        x = einops.rearrange(x, "b a f t -> b t a f")#[32, 40, 3, 12]
         return x
 
 

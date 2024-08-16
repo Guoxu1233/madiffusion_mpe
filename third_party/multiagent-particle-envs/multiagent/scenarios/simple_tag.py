@@ -11,7 +11,7 @@ class Scenario(BaseScenario):
         num_good_agents = 1
         num_adversaries = 3
         num_agents = num_adversaries + num_good_agents
-        num_landmarks = 2##################################################################
+        num_landmarks = 0
         # add agents
         world.agents = [Agent() for i in range(num_agents)]
         for i, agent in enumerate(world.agents):
@@ -27,8 +27,8 @@ class Scenario(BaseScenario):
         for i, landmark in enumerate(world.landmarks):
             landmark.name = "landmark %d" % i
             landmark.collide = True
-            landmark.movable = False##################################
-            landmark.size = 0.2########################################default 0.2
+            landmark.movable = False
+            landmark.size = 0.2
             landmark.boundary = False
         # make initial conditions
         self.reset_world(world)
@@ -46,9 +46,18 @@ class Scenario(BaseScenario):
         for i, landmark in enumerate(world.landmarks):
             landmark.color = np.array([0.25, 0.25, 0.25])
         # set random initial states
-        for agent in world.agents:
-            agent.state.p_pos = np.random.uniform(-1, +1, world.dim_p)
+        # for agent in world.agents:
+        #     agent.state.p_pos = np.random.uniform(-1, +1, world.dim_p)
+        #     print('this is in the simple tag',agent.state.p_pos)
+        #     agent.state.p_vel = np.zeros(world.dim_p)
+        #     agent.state.c = np.zeros(world.dim_c)
+        for i , agent in enumerate(world.agents):
+            if i == 3 :
+                agent.state.p_pos = np.array([0.0,0.0])
+            else:
+                agent.state.p_pos = np.random.uniform(-1, +1, world.dim_p)
             agent.state.p_vel = np.zeros(world.dim_p)
+            #print('this is vel ',agent.state.p_vel)
             agent.state.c = np.zeros(world.dim_c)
         for i, landmark in enumerate(world.landmarks):
             if not landmark.boundary:
@@ -101,10 +110,14 @@ class Scenario(BaseScenario):
                 rew += 0.1 * np.sqrt(
                     np.sum(np.square(agent.state.p_pos - adv.state.p_pos))
                 )
+        # if agent.collide:
+        #     for a in adversaries:
+        #         if self.is_collision(a, agent):
+        #             rew -= 10
         if agent.collide:
-            for a in adversaries:
-                if self.is_collision(a, agent):
-                    rew -= 10
+            all_collide = all(self.is_collision(agent, adv) for adv in adversaries)
+            if all_collide:
+                rew -= 10  # 增加惩罚值
 
         # agents are penalized for exiting the screen, so that they can be caught by the adversaries
         def bound(x):
@@ -132,17 +145,23 @@ class Scenario(BaseScenario):
             shape
         ):  # reward can optionally be shaped (decreased reward for increased distance from agents)
             for adv in adversaries:
-                rew -= 0.1 * min(
+                rew -= 0.3 * min(
                     [
                         np.sqrt(np.sum(np.square(a.state.p_pos - adv.state.p_pos)))
                         for a in agents
                     ]
                 )#鼓励对抗者去接近好人
+        # if agent.collide:
+        #     for ag in agents:
+        #         for adv in adversaries:
+        #             if self.is_collision(ag, adv):
+        #                 rew += 10#激励对抗者去和好人碰撞
         if agent.collide:
             for ag in agents:
-                for adv in adversaries:
-                    if self.is_collision(ag, adv):
-                        rew += 10#激励对抗者去和好人碰撞
+                all_collide = all(self.is_collision(ag, adv) for adv in adversaries)
+                if all_collide:
+                    rew += 50  # 增加奖励值 30 30勉强可以完成任务
+                    break  # 如果一个代理被所有对手抓住，则不需要进一步检查
         return rew
 
     def observation(self, agent, world):

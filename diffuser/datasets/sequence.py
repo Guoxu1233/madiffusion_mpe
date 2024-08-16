@@ -1,4 +1,5 @@
 import importlib
+import pdb
 from typing import Callable, List, Optional
 
 import numpy as np
@@ -98,8 +99,7 @@ class SequenceDataset(torch.utils.data.Dataset):
         )
         for _, episode in enumerate(itr):
             fields.add_path(episode)
-        fields.finalize()
-
+        fields.finalize()#fields到这里的时候，全是40，并且没有norm的那两个key,肯定的这是，normlizer的时候加上了norm，pad_future的时候加了39
         self.normalizer = DatasetNormalizer(
             fields,
             normalizer,
@@ -112,9 +112,9 @@ class SequenceDataset(torch.utils.data.Dataset):
         self.action_dim = fields.actions.shape[-1] if self.use_action else 0
         self.fields = fields
         self.n_episodes = fields.n_episodes
-        self.path_lengths = fields.path_lengths
+        self.path_lengths = fields.path_lengths#path_lengths是1000(n eposide)个40
 
-        self.indices = self.make_indices(fields.path_lengths)
+        self.indices = self.make_indices(fields.path_lengths)#   shape 是 39000, 4
         self.mask_generator = MultiAgentMaskGenerator(
             action_dim=self.action_dim,
             observation_dim=self.observation_dim,
@@ -129,14 +129,23 @@ class SequenceDataset(torch.utils.data.Dataset):
             self.normalize()
 
         self.pad_future()
-        if self.history_horizon > 0:
+        if self.history_horizon > 0:#mpe不用history
             self.pad_history()
 
         print(fields)
+        '''
+        observations: (1000, 40, 3, 12)
+        actions: (1000, 40, 3, 2)
+        rewards: (1000, 79, 3, 1)
+        terminals: (1000, 79, 3, 1)
+        timeouts: (1000, 40, 3, 1)
+        normed_observations: (1000, 79, 3, 12)
+        normed_actions: (1000, 79, 3, 2)
+        '''
 
     def pad_future(self, keys: List[str] = None):
         if keys is None:
-            keys = ["normed_observations", "rewards", "terminals"]
+            keys = ["normed_observations", "rewards", "terminals"]#指的是这三个key需要pad39这个跟 最后fields打印的结果也是一致的
             if "legal_actions" in self.fields.keys:
                 keys.append("legal_actions")
             if self.use_action:
@@ -213,7 +222,7 @@ class SequenceDataset(torch.utils.data.Dataset):
         normalize fields that will be predicted by the diffusion model
         """
         if keys is None:
-            keys = ["observations", "actions"] if self.use_action else ["observations"]
+            keys = ["observations", "actions"] if self.use_action else ["observations"]#指的是，只要这两个key需要归一化，产生norm_act和norm_obs
 
         for key in keys:
             shape = self.fields[key].shape
@@ -229,7 +238,7 @@ class SequenceDataset(torch.utils.data.Dataset):
 
         indices = []
         for i, path_length in enumerate(path_lengths):
-            if self.use_padding:
+            if self.use_padding:#true
                 max_start = path_length - 1
             else:
                 max_start = path_length - self.horizon
@@ -239,9 +248,9 @@ class SequenceDataset(torch.utils.data.Dataset):
             # get `end` and `mask_end` for each `start`
             for start in range(max_start):
                 end = start + self.horizon
-                mask_end = min(end, path_length)
+                mask_end = min(end, path_length)#因为我path_lengh和horizon设的一样长，所以mask_end会一直为40
                 indices.append((i, start, end, mask_end))
-        indices = np.array(indices)
+        indices = np.array(indices)#39000, 4
         return indices
 
     def get_conditions(self, observations: np.ndarray, agent_idx: Optional[int] = None):
@@ -250,8 +259,7 @@ class SequenceDataset(torch.utils.data.Dataset):
         """
 
         ret_dict = {}
-        # if self.decentralized_execution:
-        if self.agent_condition_type == "single":
+        if self.agent_condition_type == "single":#他在train.py里定义了，decentralized_execution为true就是single
             cond_observations = np.zeros_like(observations[: self.history_horizon + 1])
             cond_observations[:, agent_idx] = observations[
                 : self.history_horizon + 1, agent_idx
@@ -270,11 +278,18 @@ class SequenceDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, idx: int, agent_idx: Optional[int] = None):
         if self.agent_condition_type == "single":
-            path_ind, start, end, mask_end = self.indices[idx // self.n_agents]
+            path_ind, start, end, mask_end = self.indices[idx // self.n_agents]#indices的最后一个维度是4
             agent_mask = np.zeros(self.n_agents, dtype=bool)
             agent_mask[idx % self.n_agents] = 1
         elif self.agent_condition_type == "all":
-            path_ind, start, end, mask_end = self.indices[idx]
+            '''
+            idx   path_ind, start, end, mask_end
+            36710 [941       11     51    40]
+            17386 [445       31     71    40]
+            像这样的32个
+            mask_end 用来确保只计算有效时间步的数据，padding的0不会计算进去
+            '''
+            path_ind, start, end, mask_end = self.indices[idx]#第一个是[ 0,  0, 40, 40],每计算一次loss，从39000条路径中，选出batchsize条路
             agent_mask = np.ones(self.n_agents, dtype=bool)
         elif self.agent_condition_type == "random":
             path_ind, start, end, mask_end = self.indices[idx]
@@ -287,20 +302,20 @@ class SequenceDataset(torch.utils.data.Dataset):
         end = end + self.history_horizon
         mask_end = mask_end + self.history_horizon
 
-        observations = self.fields.normed_observations[path_ind, history_start:end]
+        observations = self.fields.normed_observations[path_ind, history_start:end]#那个normed_obs是(1000, 79, 3, 12)，所以每次getitem是(40, 3, 12)
         if self.use_action:
             if self.discrete_action:
                 actions = self.fields.actions[path_ind, history_start:end]
             else:
-                actions = self.fields.normed_actions[path_ind, history_start:end]
+                actions = self.fields.normed_actions[path_ind, history_start:end]#同理每个getitem是(40, 3, 2)
 
         if self.use_action:
-            trajectories = np.concatenate([actions, observations], axis=-1)
+            trajectories = np.concatenate([actions, observations], axis=-1)#(40, 3, 14)
         else:
             trajectories = observations
 
         if self.use_inv_dyn:
-            cond_masks = self.mask_generator(observations.shape, agent_mask)
+            cond_masks = self.mask_generator(observations.shape, agent_mask)#(40, 3, 12),只有第一个(3,12)全是true，其他的都是false
             cond_trajectories = observations.copy()
         else:
             cond_masks = self.mask_generator(trajectories.shape, agent_mask)
@@ -311,20 +326,19 @@ class SequenceDataset(torch.utils.data.Dataset):
             "masks": cond_masks,
         }
 
-        loss_masks = np.zeros((observations.shape[0], observations.shape[1], 1))
+        loss_masks = np.zeros((observations.shape[0], observations.shape[1], 1))#(40, 3, 1)
         if self.pred_future_padding:
-            loss_masks[self.history_horizon :] = 1.0
+            loss_masks[self.history_horizon :] = 1.0#从全0变为了全1
         else:
             loss_masks[self.history_horizon : mask_end - history_start] = 1.0
         if self.use_inv_dyn:
-            loss_masks[self.history_horizon, agent_mask] = 0.0
+            loss_masks[self.history_horizon, agent_mask] = 0.0#第一个3个1变成了3个0
 
         attention_masks = np.zeros((observations.shape[0], observations.shape[1], 1))
         attention_masks[self.history_horizon : mask_end - history_start] = 1.0
         attention_masks[: self.history_horizon, agent_mask] = 1.0
-
         batch = {
-            "x": trajectories,
+            "x": trajectories,  #this is  (40, 3, 14)
             "cond": cond,
             "loss_masks": loss_masks,
             "attention_masks": attention_masks,
@@ -332,12 +346,12 @@ class SequenceDataset(torch.utils.data.Dataset):
 
         if self.include_returns:
             rewards = self.fields.rewards[path_ind, start : -self.horizon + 1]
-            discounts = self.discounts[: len(rewards)]
-            returns = (discounts * rewards).sum(axis=0).squeeze(-1)
-            returns = np.array([returns / self.returns_scale], dtype=np.float32)
-            batch["returns"] = returns
+            discounts = self.discounts[: len(rewards)]#从1一直到0.6几，(40,1,1)
+            returns = (discounts * rewards).sum(axis=0).squeeze(-1)#最后总奖励778
+            returns = np.array([returns / self.returns_scale], dtype=np.float32)#return_scale是700
+            batch["returns"] = returns#shape (1, 3)
 
-        if self.include_env_ts:
+        if self.include_env_ts:#false
             env_ts = (
                 np.arange(history_start, start + self.horizon) - self.history_horizon
             )
@@ -345,7 +359,7 @@ class SequenceDataset(torch.utils.data.Dataset):
             env_ts[np.where(env_ts >= self.max_path_length)] = self.max_path_length
             batch["env_ts"] = env_ts
 
-        if "legal_actions" in self.fields.keys:
+        if "legal_actions" in self.fields.keys:#false
             batch["legal_actions"] = self.fields.legal_actions[
                 path_ind, history_start:end
             ]

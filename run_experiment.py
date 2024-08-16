@@ -5,7 +5,7 @@ from subprocess import Popen
 from time import sleep
 
 import dateutil.tz
-import ipdb
+
 import yaml
 
 from diffuser.utils.launcher_util import RUN, build_nested_variant_generator
@@ -45,8 +45,7 @@ if __name__ == "__main__":
             yaml.dump(variant, f, default_flow_style=False)
             f.flush()
         num_variants += 1
-
-    num_workers = min(exp_specs["meta_data"]["num_workers"], num_variants)
+    num_workers = min(exp_specs["meta_data"]["num_workers"], num_variants)#就是1
     exp_specs["meta_data"]["num_workers"] = num_workers
 
     # run the processes

@@ -1,6 +1,6 @@
-from .bc import BehaviorClone
+#from .bc import BehaviorClone
 from .diffusion import GaussianDiffusion, ValueDiffusion
-from .ma_nontemporal_wrappers import IndependentBCMLPnet, SharedBCMLPnet
+#from .ma_nontemporal_wrappers import IndependentBCMLPnet, SharedBCMLPnet
 from .ma_temporal import (
     ConcatTemporalValue,
     ConvAttentionDeconv,
@@ -15,5 +15,5 @@ from .ma_temporal_wrappers import (
     SharedIndependentTemporalUnet,
     SharedIndependentTemporalValue,
 )
-from .nontemporal import BCMLPnet
+#from .nontemporal import BCMLPnet
 from .temporal import TemporalUnet, TemporalValue

@@ -5,14 +5,14 @@ meta_data:
 
 variables:
   log_dir: [
-    "/home/user/thu_ee/madiff-main/logs/mad_mpe/simple_tag-expert/h_24-models.SharedConvAttentionDeconv-r_700-guidew_1.2-ctde_False-time_20240803_180635/100",
+    "E:/postgraduate/madiff_mpe/logs/mad_mpe/simple_tag-expert/h_40-models.SharedConvAttentionDeconv-r_700-guidew_1.2-ctde_False_0814_2016/100",
 
   ]
 
 constants:
-  load_steps: [0]
-  num_eval: 3
-  num_envs: 3
+  load_steps: [10000]
+  num_eval: 1
+  num_envs: 1
   evaluator: "utils.MADEvaluator"
   overwrite: True
   use_ddim_sample: True

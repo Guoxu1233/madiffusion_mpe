@@ -34,7 +34,7 @@ class PretrainedPreyWrapper(gym.Wrapper):
             num_out_pol=env.action_space[-1].shape[0],
             # num_in_critic=env.observation_space[-1].shape[0]
             # + env.action_space[-1].shape[0],
-            num_in_critic = 70#TODO now is hard code (bad)
+            num_in_critic = 54#TODO now is hard code (bad)
         )
 
         self.prey.to(self.device)
@@ -44,12 +44,12 @@ class PretrainedPreyWrapper(gym.Wrapper):
             "data/mpe",
             scenario_name,
             #"pretrained_adv_model.pt",
-            "model.pt"
+            "model_fix_agent.pt"
         )
 
         prey_params = torch.load(load_path, map_location=self.device)["agent_params"][
             -1
-        ]#这个torch.load后的参数的list是4，
+        ]#这个torch.load后的参数的list是4，取出最后一个的权重
         self.prey.load_params_without_optims(prey_params)
         self.prey.policy.eval()
         self.prey.target_policy.eval()
@@ -143,7 +143,7 @@ def load_environment(name, **kwargs):
 这里改成了seed1，变成只用一个seed后，replay buffer | 40000 episodes从200000变成了40000
 sequence_dataset在diffuser的datasets里的sequence会用
 '''
-def sequence_dataset(env, preprocess_fn, seed: int = 5):##################TODO 本来seed=None
+def sequence_dataset(env, preprocess_fn, seed: int = 9):##################TODO 本来seed=None
     """
     Returns an iterator through trajectories.
     Args:
@@ -189,6 +189,7 @@ def sequence_dataset(env, preprocess_fn, seed: int = 5):##################TODO �
         )
         #print(observations[0].shape) #this is obs (1000000, 3, 16) 这里指的是每个种子点都是1000000,如果5个seed都用就是5个100000
         #自己实验发现，根本就没有用acs3这个轨迹，直接删了都没事
+
         actions = np.stack(
             [
                 np.load(os.path.join(seed_path, "acs_{}.npy".format(agent_idx)))

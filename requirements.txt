@@ -15,8 +15,6 @@ jaynes==0.8.11
 joblib==0.16.0
 matplotlib
 ml-logger==0.8.69
-#mujoco==2.3.0
-#mujoco-py<2.2,>=2.1
 numpy>=1.23.0
 opencv-python
 opt-einsum==3.1.0
@@ -45,9 +43,5 @@ tensorflow-estimator==2.0.0
 tqdm
 typed-argument-parser==1.7.2
 -e ./third_party/multiagent-particle-envs
-#-e ./third_party/multiagent_mujoco
 -e ./third_party/ddpg-agent
-mjrl@git+https://github.com/aravindr93/mjrl@master#egg=mjrl
-D4RL@git+https://github.com/Farama-Foundation/d4rl@e840e80ec4ed51bbb0e557e466198b5d1ae29a15
 -e .
-#torch 的版本我用的是'2.3.1+cu121'

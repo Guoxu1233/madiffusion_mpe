@@ -98,7 +98,7 @@ def flatten(dataset, path_lengths):
 
 
 # -----------------------------------------------------------------------------#
-# ------------------------------- @TODO: remove? ------------------------------#
+# -----------------------------------------------------------------------------#
 # -----------------------------------------------------------------------------#
 
 
@@ -311,7 +311,7 @@ class CDFNormalizer1d:
 
         x = (x + 1) / 2.0
 
-        if (x < self.ymin - eps).any() or (x > self.ymax + eps).any():
+        if (x < self.ymin - eps).any() or (x > self.ymax + eps).any():#TODO
             print(
                 f"""[ dataset/normalization ] Warning: out of range in unnormalize: """
                 f"""[{x.min()}, {x.max()}] | """

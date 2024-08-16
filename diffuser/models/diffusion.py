@@ -109,7 +109,7 @@ class GaussianDiffusion(nn.Module):
             )
 
         elif self.share_inv:
-            print("\n USE SHARED INV \n")
+            print("\n USE SHARED INV \n")#目前做实验用到的inverse dynamics
             inv_model = nn.Sequential(
                 nn.Linear(2 * self.observation_dim, hidden_dim),
                 nn.ReLU(),
@@ -208,8 +208,7 @@ class GaussianDiffusion(nn.Module):
             epsilon = self.model(
                 x, t, env_timestep=env_ts, attention_masks=attention_masks
             )
-
-        return epsilon
+        return epsilon#[2, 40, 3, 12]
 
 
     @torch.no_grad()
@@ -244,8 +243,7 @@ class GaussianDiffusion(nn.Module):
 
         # set step values
         # scheduler.set_timesteps(self.num_inference_steps)
-        timesteps = scheduler.timesteps
-
+        timesteps = scheduler.timesteps#扩散的步骤是200步，从199倒序到0
         progress = utils.Progress(len(timesteps)) if verbose else utils.Silent()
         for t in timesteps:
             # 1. apply conditioning
@@ -268,7 +266,6 @@ class GaussianDiffusion(nn.Module):
         # finally make sure conditioning is enforced
         x = apply_conditioning(x, cond)
         x = self.data_encoder(x)
-
         progress.close()
         if return_diffusion:
             return x, torch.stack(diffusion, dim=1)
@@ -375,11 +372,11 @@ class GaussianDiffusion(nn.Module):
     ):
         info = {}
         # Calculating inv loss
-        x_t = x[:, :-1, :, self.action_dim :]
-        a_t = x[:, :-1, :, : self.action_dim]
-        x_t_1 = x[:, 1:, :, self.action_dim :]
+        x_t = x[:, :-1, :, self.action_dim :]#xt shape torch.Size([32, 39, 3, 12])  注意这里的x拼接过
+        a_t = x[:, :-1, :, : self.action_dim]#at shape torch.Size([32, 39, 3, 2])
+        x_t_1 = x[:, 1:, :, self.action_dim :]#xt1 shape torch.Size([32, 39, 3, 12])
         x_comb_t = torch.cat([x_t, x_t_1], dim=-1)
-        x_comb_t = x_comb_t.reshape(-1, x_comb_t.shape[2], 2 * self.observation_dim)
+        x_comb_t = x_comb_t.reshape(-1, x_comb_t.shape[2], 2 * self.observation_dim)#torch.Size([1248, 3, 24])
         a_t = a_t.reshape(-1, a_t.shape[2], self.action_dim)
         masks_t = loss_masks[:, 1:].reshape(-1, loss_masks.shape[2])
         if legal_actions is not None:
@@ -394,8 +391,7 @@ class GaussianDiffusion(nn.Module):
                 ).reshape(x_comb_t.shape[0], x_comb_t.shape[1], -1)
             else:
                 pred_a_t = self.inv_model(x_comb_t)
-
-            if legal_actions is not None:
+            if legal_actions is not None:#is None
                 pred_a_t[legal_actions_t == 0] = -1e10
             if self.discrete_action:
                 inv_loss = (
@@ -493,7 +489,6 @@ class GaussianDiffusion(nn.Module):
             loss = (1 / 2) * (diffuse_loss + inv_loss)
         else:
             loss = diffuse_loss
-
         return loss, info
 
     def forward(self, cond, *args, **kwargs):

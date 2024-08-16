@@ -196,7 +196,6 @@ class ResidualTemporalBlock(nn.Module):
 
         out = self.blocks[0](x) + self.time_mlp(t)
         out = self.blocks[1](out)
-
         return out + self.residual_conv(x)
 
 
@@ -220,8 +219,6 @@ class TemporalUnet(nn.Module):
 
         dims = [transition_dim, *map(lambda m: dim * m, dim_mults)]
         in_out = list(zip(dims[:-1], dims[1:]))
-        print(f"[ models/temporal ] Channel dimensions: {in_out}")
-
         mish = True
         act_fn = nn.Mish()
 
@@ -267,7 +264,6 @@ class TemporalUnet(nn.Module):
         self.ups = nn.ModuleList([])
         num_resolutions = len(in_out)
 
-        print(in_out)
         for ind, (dim_in, dim_out) in enumerate(in_out):
             is_last = ind >= (num_resolutions - 1)
 

@@ -1,7 +1,7 @@
 meta_data:
   exp_name: "mad_mpe"
   script_path: "run_scripts/train.py"
-  num_workers: 2
+  num_workers: 1
   job_name: "{dataset}/h_{horizon}-{model}-r_{returns_scale}-guidew_{condition_guidance_w}-ctde_{decentralized_execution}"
 
 variables:
@@ -50,7 +50,7 @@ constants:
 
   # dataset
   loader: "datasets.SequenceDataset"
-  normalizer: "CDFNormalizer"
+  normalizer: "GaussianNormalizer"
   max_n_episodes: 200000
   preprocess_fns: []
   use_padding: True
@@ -79,4 +79,4 @@ constants:
   eval_freq: 100000
 
   # load checkpoint
-  continue_training: True
+  continue_training: False

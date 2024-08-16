@@ -1,0 +1,8 @@
+LICENSE
+README.md
+setup.py
+diffuser/__init__.py
+madiff.egg-info/PKG-INFO
+madiff.egg-info/SOURCES.txt
+madiff.egg-info/dependency_links.txt
+madiff.egg-info/top_level.txt

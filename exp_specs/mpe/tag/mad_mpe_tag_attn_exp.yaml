@@ -1,13 +1,13 @@
 meta_data:
   exp_name: "mad_mpe"
   script_path: "run_scripts/train.py"
-  num_workers: 2
+  num_workers: 1
   job_name: "{dataset}/h_{horizon}-{model}-r_{returns_scale}-guidew_{condition_guidance_w}-ctde_{decentralized_execution}"
 
 variables:
   seed: [100]
   
-  horizon: [24]
+  horizon: [40]
   returns_scale: [700]
   dataset: ["simple_tag-expert"]
   condition_guidance_w: [1.2]
@@ -49,7 +49,7 @@ constants:
 
   # dataset
   loader: "datasets.SequenceDataset"
-  normalizer: "CDFNormalizer"
+  normalizer: "LimitsNormalizer"
   max_n_episodes: 200000
   preprocess_fns: []
   use_padding: True
@@ -58,24 +58,24 @@ constants:
   termination_penalty: 0.0
 
   # training
-  n_steps_per_epoch: 10000
-  n_train_steps: 1000000
+  n_steps_per_epoch: 1000
+  n_train_steps: 100000
   batch_size: 32
   learning_rate: 0.0002
-  gradient_accumulate_every: 2
+  gradient_accumulate_every: 1
   ema_decay: 0.995
-  log_freq: 1000
-  save_freq: 50000
-  sample_freq: 10000
-  n_saves: 5
-  save_parallel: False
+  log_freq: 1
+  save_freq: 5000
+  sample_freq: 1000
+  #n_saves: 5
+  #save_parallel: False
   n_reference: 3
   save_checkpoints: True
 
   # eval
   evaluator: "utils.MADEvaluator"
-  num_eval: 10
-  eval_freq: 100000
+  num_eval: 5
+  eval_freq: 10000
 
   # load checkpoint
-  continue_training: True
+  continue_training: False

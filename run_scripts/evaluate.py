@@ -1,8 +1,6 @@
 import argparse
 import os
 
-import ipdb
-
 import diffuser.utils as utils
 import yaml
 from diffuser.utils.launcher_util import build_config_from_dict

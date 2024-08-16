@@ -6,7 +6,7 @@ import numpy as np
 import torch
 from tap import Tap
 
-from .git_utils import get_git_rev, save_git_diff
+#from .git_utils import get_git_rev, save_git_diff
 from .serialization import mkdir
 
 

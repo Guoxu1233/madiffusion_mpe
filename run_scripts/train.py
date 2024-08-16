@@ -1,7 +1,6 @@
 import argparse
 import os
 import datetime
-
 import diffuser.utils as utils
 import torch
 import yaml
@@ -151,9 +150,9 @@ def main(Config, RUN):
         sample_freq=Config.sample_freq,
         save_freq=Config.save_freq,
         log_freq=Config.log_freq,
-        label_freq=int(Config.n_train_steps // Config.n_saves),
+        #label_freq=int(Config.n_train_steps // Config.n_saves),
         eval_freq=Config.eval_freq,
-        save_parallel=Config.save_parallel,
+        #save_parallel=Config.save_parallel,
         bucket=logger.root,
         n_reference=Config.n_reference,
         train_device=Config.device,
@@ -172,7 +171,7 @@ def main(Config, RUN):
 
     model = model_config()
     diffusion = diffusion_config(model)
-    trainer = trainer_config(diffusion, dataset, renderer)
+    trainer = trainer_config(diffusion, dataset, renderer)#跳进training里的Trainer类，里面需要这三个东西diffusion, dataset, renderer
 
     if Config.eval_freq > 0:
         evaluator = evaluator_config()
@@ -203,13 +202,13 @@ def main(Config, RUN):
     batch = utils.batchify(dataset[0], Config.device)
     loss, _ = diffusion.loss(**batch)
     loss.backward()
-    logger.print("✓")
+    #logger.print("✓")
 
     # -----------------------------------------------------------------------------#
     # --------------------------------- main loop ---------------------------------#
     # -----------------------------------------------------------------------------#
 
-    n_epochs = int((Config.n_train_steps - trainer.step) // Config.n_steps_per_epoch)
+    n_epochs = int((Config.n_train_steps - trainer.step) // Config.n_steps_per_epoch)#n_train_steps//n_step_per_epoch决定多少轮
 
     for i in range(n_epochs):
         logger.print(f"Epoch {i} / {n_epochs} | {logger.prefix}")
@@ -234,8 +233,8 @@ if __name__ == "__main__":
 
     Config.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    current_time = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
-    Config.job_name = Config.job_name + f"-time_{current_time}"
+    current_time = datetime.datetime.now().strftime('%m%d_%H%M')
+    Config.job_name = Config.job_name + f"_{current_time}"
 
     job_name = Config.job_name.format(**vars(Config))
     RUN.prefix, RUN.job_name, _ = RUN(

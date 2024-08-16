@@ -116,7 +116,11 @@ class Progress:
     def _format_speed(self, n):
         num_steps = n - self._step0
         t = time.time() - self._time0
-        speed = num_steps / t
+        #speed = num_steps / t
+        if t == 0:
+            speed = 0
+        else:
+            speed = num_steps / t
         string = "{:.1f} Hz".format(speed)
         if num_steps > 0:
             self._speed = string

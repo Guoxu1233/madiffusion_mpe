@@ -80,7 +80,6 @@ class ReplayBuffer:
         # path[key] shape: (path_length, n_agents, dim)
         path_length = len(path["observations"])
         #print(path_length) #这里和设置的eposide_lengh是一样的，设置是40就是40,原本的数据是25
-        print(self.max_path_length)
         assert path_length <= self.max_path_length
 
         # NOTE(zbzhu): agents must terminate together
